@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v2.3
+    command:
+      - --api.insecure=true
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "8085:80"
+      - "8083:8080" # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`traefik.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.api.service=api@internal"
+
+  vue-app:
+    build: .
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vue-app.rule=Host(`vue-app.locl.nip.io`)"
+      - "traefik.http.routers.vue-app.entrypoints=web"
+    depends_on:
+      - traefik
+    environment: 
+      VITE_STRIPE_PK: pk_test_51JgklQGtIcz1tHBkUpModcBlaq6PSPhjnYQ6xErmRylIMgF7kshkeLIMd0wX8Hz238kclCTZG7rrvUmGHaTemssu00dWTcFOt5
+      VITE_STRIPE_SK: sk_test_51JgklQGtIcz1tHBk9k7ayax9nCpmjy79ncHSjjrOlFSpyxVSX8wLP9rlOx5bFH21mhLWEVui23jy2gNPCB7BxbZs003LAKDdwq
+      VITE_API_URL: https://strapi.coderstudio.co
+      VITE_API_KET: ae51fd33ca837f8fd4ae8665fbb01267dff8363e6d1285e3d96b593dc14d52f3d9b4d953e94337e97aa7df48ac399dc0e119f4a0ec8bc314e5ead04aefc90451e41f60f291ffb7157fe25ba24bcd55e13f6f4ae0208fd08126d0bd2853a5b960db6eb92ec95f442b99230f95ebbc1a17d7afbcbd265d009d585d0c568c1c8b34
+    ports:
+      - "8082:80"
+
+networks:
+  default:
+    name: traefik_default
+    external: true
